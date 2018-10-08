@@ -338,7 +338,7 @@ def show_results(best_img, content_path, style_path, show_large_final=True):
 
 #run on each img in base contetn path and save the image
 for file in os.listdir(base_content_path):
-    if file.endswith(".png"):
+    if file.endswith(".png") || file.endswith(".jpg"):
         best, best_loss = run_style_transfer(os.path.join(base_content_path, file),
             style_path, num_iterations=1000)
 
