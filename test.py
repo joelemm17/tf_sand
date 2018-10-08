@@ -7,6 +7,10 @@ import matplotlib as mpl
 mpl.rcParams['figure.figsize'] = (10,10)
 mpl.rcParams['axes.grid'] = False
 
+import librosa
+import kapre
+from kapre.time_frequency import Spectrogram
+
 import numpy as np
 from PIL import Image
 import time
@@ -31,11 +35,8 @@ style_path = '/home/joe/tensorflow/tf_sand/imgs/1024px-Van_Gogh_-_Starry_Night_-
 
 
 def load_img(path_to_img):
-    max_dim = 1024
+
     img = Image.open(path_to_img)
-    long = max(img.size)
-    scale = max_dim/long
-    img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.ANTIALIAS)
 
     img = kp_image.img_to_array(img)
 
@@ -54,6 +55,11 @@ def imshow(img, title=None):
         plt.title(title)
 
     plt.imshow(out)
+
+
+def load_and_process_mp3(path_to_mp3):
+    mp3, sr = librosa.load(path_to_mp3, sr=None, mono=True)
+    return mp3
 
 
 def load_and_process_img(path_to_img):
