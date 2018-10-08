@@ -1,4 +1,4 @@
-# https://github.com/tensorflow/models/tree/master/research/nst_blogpost 
+# https://github.com/tensorflow/models/tree/master/research/nst_blogpost
 
 import os
 
@@ -326,6 +326,7 @@ def show_results(best_img, content_path, style_path, show_large_final=True):
         plt.imshow(best_img)
         plt.title('Output Image')
         plt.show()
+
 
 #run on each img in base contetn path and save the image
 for file in os.listdir(base_content_path):
