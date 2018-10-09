@@ -38,7 +38,7 @@ style_path = os.path.join(
 
 
 def load_img(path_to_img):
-    max_dim = 1024
+    max_dim = 2048
     img = Image.open(path_to_img)
     long = max(img.size)
     scale = max_dim/long
@@ -338,7 +338,7 @@ def show_results(best_img, content_path, style_path, show_large_final=True):
 
 #run on each img in base contetn path and save the image
 for file in os.listdir(base_content_path):
-    if file.endswith(".png") || file.endswith(".jpg"):
+    if file.endswith(".png") or file.endswith(".jpg"):
         best, best_loss = run_style_transfer(os.path.join(base_content_path, file),
             style_path, num_iterations=1000)
 
