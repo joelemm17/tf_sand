@@ -28,14 +28,21 @@ from tensorflow.python.keras import backend as K
 tf.enable_eager_execution()
 
 # Set up some global values here
-base_content_path = '/home/joe/Desktop/Starrynight-kenny'
-output_path = '/home/joe/tensorflow/tf_sand/imgs/out'
+cwd = os.getcwd()
+base_content_path = os.path.join(cwd, 'imgs', 'in')
+output_path = os.path.join(cwd, 'imgs', 'out')
 content_path = base_content_path
-style_path = '/home/joe/tensorflow/tf_sand/imgs/1024px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'
+
+# select style input
+style_path = os.path.join(
+            cwd,
+            'imgs',
+            'styles',
+            '1024px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg')
 
 
 def load_img(path_to_img):
-
+    max_dim = 2048
     img = Image.open(path_to_img)
 
     img = kp_image.img_to_array(img)
@@ -101,7 +108,8 @@ num_content_layers = len(content_layers)
 num_style_layers = len(style_layers)
 
 def get_model():
-    """ Creates our model with access to intermediate layers.
+    """\
+    Creates our model with access to intermediate layers.
 
     This function will load the VGG19 model and access the intermediate layers.
     These layers will then be used to create a new model that will take input image
@@ -147,19 +155,19 @@ def get_style_loss(base_style, gram_target):
 
 def get_feature_representations(model, content_path, style_path):
     """\
-        Helper function to compute our content and style feature representations.
+    Helper function to compute our content and style feature representations.
 
-        This function will simply load and preprocess both the content and style
-        images from their path. Then it will feed them through the network to obtain
-        the outputs of the intermediate layers.
+    This function will simply load and preprocess both the content and style
+    images from their path. Then it will feed them through the network to obtain
+    the outputs of the intermediate layers.
 
-        Arguments:
-        model: The model that we are using.
-        content_path: The path to the content image.
-        style_path: The path to the style image
+    Arguments:
+    model: The model that we are using.
+    content_path: The path to the content image.
+    style_path: The path to the style image
 
-        Returns:
-        returns the style features and the content features.
+    Returns:
+    returns the style features and the content features.
     """
     # Load our images in
     content_image = load_and_process_img(content_path)
@@ -177,22 +185,22 @@ def get_feature_representations(model, content_path, style_path):
 
 def compute_loss(model, loss_weights, init_image, gram_style_features, content_features):
     """\
-        This function will compute the loss total loss.
+    This function will compute the loss total loss.
 
-        Arguments:
-        model: The model that will give us access to the intermediate layers
-        loss_weights: The weights of each contribution of each loss function.
-          (style weight, content weight, and total variation weight)
-        init_image: Our initial base image. This image is what we are updating with
-          our optimization process. We apply the gradients wrt the loss we are
-          calculating to this image.
-        gram_style_features: Precomputed gram matrices corresponding to the
-          defined style layers of interest.
-        content_features: Precomputed outputs from defined content layers of
-          interest.
+    Arguments:
+    model: The model that will give us access to the intermediate layers
+    loss_weights: The weights of each contribution of each loss function.
+      (style weight, content weight, and total variation weight)
+    init_image: Our initial base image. This image is what we are updating with
+      our optimization process. We apply the gradients wrt the loss we are
+      calculating to this image.
+    gram_style_features: Precomputed gram matrices corresponding to the
+      defined style layers of interest.
+    content_features: Precomputed outputs from defined content layers of
+      interest.
 
-        Returns:
-        returns the total loss, style loss, content loss, and total variational loss
+    Returns:
+    returns the total loss, style loss, content loss, and total variational loss
     """
     style_weight, content_weight = loss_weights
 
@@ -240,79 +248,79 @@ def run_style_transfer(content_path,
                        num_iterations=1000,
                        content_weight=1e3,
                        style_weight=1e-2):
-  # We don't need to (or want to) train any layers of our model, so we set their
-  # trainable to false.
-  model = get_model()
-  for layer in model.layers:
-    layer.trainable = False
+    # We don't need to (or want to) train any layers of our model, so we set their
+    # trainable to false.
+    model = get_model()
+    for layer in model.layers:
+        layer.trainable = False
 
-  # Get the style and content feature representations (from our specified intermediate layers)
-  style_features, content_features = get_feature_representations(model, content_path, style_path)
-  gram_style_features = [gram_matrix(style_feature) for style_feature in style_features]
+    # Get the style and content feature representations (from our specified intermediate layers)
+    style_features, content_features = get_feature_representations(model, content_path, style_path)
+    gram_style_features = [gram_matrix(style_feature) for style_feature in style_features]
 
-  # Set initial image
-  init_image = load_and_process_img(content_path)
-  init_image = tfe.Variable(init_image, dtype=tf.float32)
-  # Create our optimizer
-  opt = tf.train.AdamOptimizer(learning_rate=5, beta1=0.99, epsilon=1e-1)
+    # Set initial image
+    init_image = load_and_process_img(content_path)
+    init_image = tfe.Variable(init_image, dtype=tf.float32)
+    # Create our optimizer
+    opt = tf.train.AdamOptimizer(learning_rate=5, beta1=0.99, epsilon=1e-1)
 
-  # For displaying intermediate images
-  iter_count = 1
+    # For displaying intermediate images
+    iter_count = 1
 
-  # Store our best result
-  best_loss, best_img = float('inf'), None
+    # Store our best result
+    best_loss, best_img = float('inf'), None
 
-  # Create a nice config
-  loss_weights = (style_weight, content_weight)
-  cfg = {
-      'model': model,
-      'loss_weights': loss_weights,
-      'init_image': init_image,
-      'gram_style_features': gram_style_features,
-      'content_features': content_features
-  }
+    # Create a nice config
+    loss_weights = (style_weight, content_weight)
+    cfg = {
+        'model': model,
+        'loss_weights': loss_weights,
+        'init_image': init_image,
+        'gram_style_features': gram_style_features,
+        'content_features': content_features
+    }
 
-  # For displaying
-  num_rows = 2
-  num_cols = 5
-  display_interval = num_iterations/(num_rows*num_cols)
-  start_time = time.time()
-  global_start = time.time()
+    # For displaying
+    num_rows = 2
+    num_cols = 5
+    display_interval = num_iterations/(num_rows*num_cols)
+    start_time = time.time()
+    global_start = time.time()
 
-  norm_means = np.array([103.939, 116.779, 123.68])
-  min_vals = -norm_means
-  max_vals = 255 - norm_means
+    norm_means = np.array([103.939, 116.779, 123.68])
+    min_vals = -norm_means
+    max_vals = 255 - norm_means
 
-  imgs = []
-  for i in range(num_iterations):
-    grads, all_loss = compute_grads(cfg)
-    loss, style_score, content_score = all_loss
-    opt.apply_gradients([(grads, init_image)])
-    clipped = tf.clip_by_value(init_image, min_vals, max_vals)
-    init_image.assign(clipped)
-    end_time = time.time()
+    imgs = []
+    for i in range(num_iterations):
+        grads, all_loss = compute_grads(cfg)
+        loss, style_score, content_score = all_loss
+        opt.apply_gradients([(grads, init_image)])
+        clipped = tf.clip_by_value(init_image, min_vals, max_vals)
+        init_image.assign(clipped)
+        end_time = time.time()
 
-    if loss < best_loss:
-      # Update best loss and best image from total loss.
-      best_loss = loss
-      best_img = deprocess_img(init_image.numpy())
+        if loss < best_loss:
+            # Update best loss and best image from total loss.
+            best_loss = loss
+            best_img = deprocess_img(init_image.numpy())
 
-    if i % display_interval== 0:
-      start_time = time.time()
+        if i % display_interval== 0:
+            start_time = time.time()
 
-      # Use the .numpy() method to get the concrete numpy array
-      plot_img = init_image.numpy()
-      plot_img = deprocess_img(plot_img)
-      imgs.append(plot_img)
+            # Use the .numpy() method to get the concrete numpy array
+            plot_img = init_image.numpy()
+            plot_img = deprocess_img(plot_img)
+            imgs.append(plot_img)
 
-      print('Iteration: {}'.format(i))
-      print('Total loss: {:.4e}, '
-            'style loss: {:.4e}, '
-            'content loss: {:.4e}, '
-            'time: {:.4f}s'.format(loss, style_score, content_score, time.time() - start_time))
-  print('Total time: {:.4f}s'.format(time.time() - global_start))
+            print('Iteration: {}'.format(i))
+            print('Total loss: {:.4e}, '
+                    'style loss: {:.4e}, '
+                    'content loss: {:.4e}, '
+                    'time: {:.4f}s'.format(loss, style_score, content_score, time.time() - start_time))
+    print('Total time: {:.4f}s'.format(time.time() - global_start))
 
-  return best_img, best_loss
+    return best_img, best_loss
 
 
 def show_results(best_img, content_path, style_path, show_large_final=True):
@@ -336,7 +344,7 @@ def show_results(best_img, content_path, style_path, show_large_final=True):
 
 #run on each img in base contetn path and save the image
 for file in os.listdir(base_content_path):
-    if file.endswith(".png"):
+    if file.endswith(".png") or file.endswith(".jpg"):
         best, best_loss = run_style_transfer(os.path.join(base_content_path, file),
             style_path, num_iterations=1000)
 
